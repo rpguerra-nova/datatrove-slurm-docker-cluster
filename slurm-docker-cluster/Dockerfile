@@ -73,6 +73,7 @@ RUN set -x \
         /var/run/slurmdbd \
         /var/lib/slurmd \
         /var/log/slurm \
+        /app \
         /data \
     && touch /var/lib/slurmd/node_state \
         /var/lib/slurmd/front_end_state \
@@ -92,6 +93,25 @@ RUN set -x \
     && chown slurm:slurm /etc/slurm/slurmdbd.conf \
     && chmod 600 /etc/slurm/slurmdbd.conf
 
+# --- Datatrove Application Integration ---
+
+# Copy the packed environment and your code into the Slurm worker/controller image
+# Ensure the paths are correct relative to the Docker build context.
+COPY app/datatrove_env.tar.gz /opt/
+COPY app/datatrove_pipeline.py /app/
+
+# 1. Create a directory for the unpacked environment
+RUN mkdir -p /opt/conda_envs
+# 2. Unpack the environment
+RUN tar -xzf /opt/datatrove_env.tar.gz -C /opt/conda_envs/
+# 3. Clean up the tarball
+RUN rm /opt/datatrove_env.tar.gz
+
+# 4. Set the environment variables globally for the cluster
+ENV CONDA_PREFIX="/opt/conda_envs/datatrove_env"
+
+# 5. Run conda-unpack to fix all internal absolute paths
+RUN ${CONDA_PREFIX}/bin/conda-unpack
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -1,0 +1,62 @@
+name: Datatrove Slurm Pipeline Execution
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  run_datatrove_job:
+    runs-on: self-hosted # Use your machine or a dedicated self-hosted runner
+
+    steps:
+    - name: 1. Checkout Slurm Cluster Repo and App Files
+      uses: actions/checkout@v4
+      with:
+        path: slurm-docker-cluster # Clones into the subdirectory where we run commands
+
+    - name: 2. Build and Start Slurm Cluster
+      # Builds the image using the modified Dockerfile (with the Conda environment)
+      run: |
+        docker compose build
+        docker compose up -d
+      working-directory: slurm-docker-cluster
+
+    - name: 3. Wait for Slurm Daemons to Initialize
+      # Give the Slurm services time to configure and register the worker nodes.
+      run: sleep 30
+      working-directory: slurm-docker-cluster
+
+    - name: 4. Execute the Main Datatrove Pipeline Script
+      # Define execution parameters and pass them as arguments to the Python script
+      env:
+        DATATROVE_TASKS: 10000          # Total documents to process
+        DATATROVE_WORKERS: 32          # Max concurrent Slurm jobs (passed to executor.workers)
+        INPUT_DIR: /app/data/input
+        OUTPUT_DIR: /app/data/output
+        LOGS_DIR: /app/data/logs
+
+      run: |
+        echo "Submitting pipeline with ${DATATROVE_TASKS} tasks and ${DATATROVE_WORKERS} workers to Slurm..."
+        # Use 'docker exec' to call the Python script with all arguments
+        docker exec slurm-master bash -c "sinfo && python /app/datatrove_pipeline.py \
+          ${INPUT_DIR} \
+          -t ${DATATROVE_TASKS} \
+          -w ${DATATROVE_WORKERS} \
+          -l ${LOGS_DIR} \
+          -o ${OUTPUT_DIR}"
+      working-directory: slurm-docker-cluster
+
+    - name: 5. Monitor Slurm Jobs Until Completion
+      # A simple loop to confirm all jobs launched by the pipeline have finished
+      run: |
+        echo "Monitoring Slurm Queue for job completion..."
+        # We check the queue status inside the slurm-master container
+        while docker exec slurm-master squeue -h | grep datatrove_task; do
+          sleep 60
+        done
+        echo "All Slurm jobs complete. Pipeline finished."
+      working-directory: slurm-docker-cluster
+
+    - name: 6. Clean up the Slurm Cluster
+      if: always() # Run cleanup even if a previous step fails
+      run: docker compose down -v
+      working-directory: slurm-docker-cluster
