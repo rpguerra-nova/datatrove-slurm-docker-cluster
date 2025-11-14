@@ -71,7 +71,7 @@ def get_stop_words_fineweb2():
         "com", "para", "na", "é", "foi"
     ]
 
-def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_workers=1):
+def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_workers=1, cpus_per_task=1, mem_per_cpu_gb=1):
     input_reader = JsonlReader(
         data_folder=f"{output_path}/filtering_output",
         glob_pattern="*.jsonl.gz"
@@ -170,10 +170,10 @@ def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_worke
         workers=num_workers,  # Same as the number of cpus to use
         randomize_start_duration=180,
         job_name=f"{collection_job_id}-warc",
-        cpus_per_task=2,  # Number of cpus per task
-        mem_per_cpu_gb=4,
+        cpus_per_task=cpus_per_task,  # Number of cpus per task
+        mem_per_cpu_gb=mem_per_cpu_gb,
         time="0",  # No time limit
-        partition="slurm_queue",
+        partition="normal",
         venv_path="/opt/conda_envs/datatrove_env/bin/activate"
     )
 
@@ -193,11 +193,11 @@ def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_worke
         randomize_start_duration=180,
         depends=scrape_filter_stage,
         job_name=f"{collection_job_id}-mh1",
-        cpus_per_task=2,
+        cpus_per_task=cpus_per_task,
         time="0",
         slurm_logs_folder=f"{dedup_logs_path}/1_signatures/slurm_logs",
-        mem_per_cpu_gb=4,
-        partition="slurm_queue",
+        mem_per_cpu_gb=mem_per_cpu_gb,
+        partition="normal",
         venv_path="/opt/conda_envs/datatrove_env/bin/activate"
     )
 
@@ -216,11 +216,11 @@ def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_worke
         randomize_start_duration=180,
         depends=stage1,
         job_name=f"{collection_job_id}-mh2",
-        cpus_per_task=2,
+        cpus_per_task=cpus_per_task,
         time="0",
-        mem_per_cpu_gb=4,
+        mem_per_cpu_gb=mem_per_cpu_gb,
         slurm_logs_folder=f"{dedup_logs_path}/2_buckets/slurm_logs",
-        partition="slurm_queue",
+        partition="normal",
         venv_path="/opt/conda_envs/datatrove_env/bin/activate"
     )
 
@@ -239,11 +239,11 @@ def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_worke
         tasks=1,
         depends=stage2,
         job_name=f"{collection_job_id}-mh3",
-        cpus_per_task=2,
+        cpus_per_task=cpus_per_task,
         time="0",
-        mem_per_cpu_gb=4,
+        mem_per_cpu_gb=mem_per_cpu_gb,
         slurm_logs_folder=f"{dedup_logs_path}/3_clusters/slurm_logs",
-        partition="slurm_queue",
+        partition="normal",
         venv_path="/opt/conda_envs/datatrove_env/bin/activate"
     )
 
@@ -266,11 +266,11 @@ def run_full_pipeline(files_path, output_path, logs_path, num_tasks=1, num_worke
         workers=num_workers,
         depends=stage3,
         job_name=f"{collection_job_id}-mh4",
-        cpus_per_task=2,
+        cpus_per_task=cpus_per_task,
         time="0",
-        mem_per_cpu_gb=4,
+        mem_per_cpu_gb=mem_per_cpu_gb,
         slurm_logs_folder=f"{dedup_logs_path}/final_output/slurm_logs",
-        partition="slurm_queue",
+        partition="normal",
         venv_path="/opt/conda_envs/datatrove_env/bin/activate"
     )
 
@@ -290,6 +290,10 @@ if __name__ == "__main__":
                         type=int)
     parser.add_argument('-w', dest='numWorkers', help='number of workers to split each file amongst', default=1,
                         type=int)
+    parser.add_argument('-c', dest='cpusPerTask', help='number of CPUs to be used per task', default=1,
+                        type=int)
+    parser.add_argument('-m', dest='memPerCpuGb', help='memory to be used per CPU in GB', default=1,
+                        type=int)
 
     args = parser.parse_args()
 
@@ -303,5 +307,5 @@ if __name__ == "__main__":
     if not os.path.isdir(args.logsPath):
         os.makedirs(args.logsPath, exist_ok=True)
 
-    run_full_pipeline(args.files_path.removesuffix("/"), args.outFolderPath.removesuffix("/"), args.logsPath.removesuffix("/"), args.numTasks, args.numWorkers)
+    run_full_pipeline(args.files_path.removesuffix("/"), args.outFolderPath.removesuffix("/"), args.logsPath.removesuffix("/"), args.numTasks, args.numWorkers, args.cpusPerTask, args.memPerCpuGb)
 

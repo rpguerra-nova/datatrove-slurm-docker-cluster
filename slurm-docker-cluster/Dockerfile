@@ -102,8 +102,9 @@ COPY app/datatrove_pipeline.py /app/
 
 # 1. Create a directory for the unpacked environment
 RUN mkdir -p /opt/conda_envs
+RUN mkdir -p /opt/conda_envs/datatrove_env
 # 2. Unpack the environment
-RUN tar -xzf /opt/datatrove_env.tar.gz -C /opt/conda_envs/
+RUN tar -xzf /opt/datatrove_env.tar.gz -C /opt/conda_envs/datatrove_env
 # 3. Clean up the tarball
 RUN rm /opt/datatrove_env.tar.gz
 
@@ -114,6 +115,7 @@ ENV CONDA_PREFIX="/opt/conda_envs/datatrove_env"
 RUN ${CONDA_PREFIX}/bin/conda-unpack
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["slurmdbd"]

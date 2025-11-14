@@ -35,19 +35,20 @@ services:
 
   slurmctld:
     image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
-    build:
-      context: .
-      args:
-        SLURM_TAG: ${SLURM_TAG:-slurm-25-05-3-1}
     command: ["slurmctld"]
     container_name: slurmctld
     hostname: slurmctld
+    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
-      - ./cgroup.conf:/etc/slurm/cgroup.conf # <-- ADICIONADO AQUI
+      - ./slurm.conf:/etc/slurm/slurm.conf
+      - ./cgroup.conf:/etc/slurm/cgroup.conf
+      - ${HOST_INPUT_PATH}:/app/data/input:ro
+      - ${HOST_OUTPUT_PATH}:/app/data/output
+      - ${HOST_LOGS_PATH}:/app/data/logs
     expose:
       - "6817"
     depends_on:
@@ -57,19 +58,19 @@ services:
 
   c1:
     image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
-    build:
-      context: .
-      args:
-        SLURM_TAG: ${SLURM_TAG:-slurm-25-05-3-1}
     command: ["slurmd"]
     hostname: c1
     container_name: c1
+    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
-      - ./cgroup.conf:/etc/slurm/cgroup.conf # <-- ADICIONADO AQUI
+      - ./cgroup.conf:/etc/slurm/cgroup.conf
+      - ${HOST_INPUT_PATH}:/app/data/input:ro
+      - ${HOST_OUTPUT_PATH}:/app/data/output
+      - ${HOST_LOGS_PATH}:/app/data/logs
     expose:
       - "6818"
     depends_on:
@@ -79,19 +80,19 @@ services:
 
   c2:
     image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
-    build:
-      context: .
-      args:
-        SLURM_TAG: ${SLURM_TAG:-slurm-25-05-3-1}
     command: ["slurmd"]
     hostname: c2
     container_name: c2
+    privileged: true
     volumes:
       - etc_munge:/etc/munge
       - etc_slurm:/etc/slurm
       - slurm_jobdir:/data
       - var_log_slurm:/var/log/slurm
-      - ./cgroup.conf:/etc/slurm/cgroup.conf # <-- ADICIONADO AQUI
+      - ./cgroup.conf:/etc/slurm/cgroup.conf
+      - ${HOST_INPUT_PATH}:/app/data/input:ro
+      - ${HOST_OUTPUT_PATH}:/app/data/output
+      - ${HOST_LOGS_PATH}:/app/data/logs
     expose:
       - "6818"
     depends_on:
