@@ -16,11 +16,9 @@ jobs:
     - name: 2. Set Dynamic Slurm Resources
       # Define total resources available on THIS CI runner
       env:
-        # Calculate per-node values (assuming 2 nodes, and RAM in MB)
-        SLURM_HOST_CPUS_C1: 16
-        SLURM_HOST_CPUS_C2: 16
-        SLURM_HOST_MEMORY_C1: 40000
-        SLURM_HOST_MEMORY_C2: 40000
+        # Calculate per-node values (assuming 1 node, and RAM in MB)
+        SLURM_HOST_CPUS: 32
+        SLURM_HOST_MEMORY: 80000
 
       run: |
         CONF_TEMPLATE="template-slurm.conf"
@@ -49,19 +47,18 @@ jobs:
     - name: 5. Execute the Main Datatrove Pipeline Script
       # Define execution parameters and pass them as arguments to the Python script
       env:
-        DATATROVE_TASKS: 10000          # Total documents to process
+        DATATROVE_TASKS: 10000          # Total tasks to process
         DATATROVE_WORKERS: 32           # Max concurrent Slurm jobs (passed to executor.workers)
         DATATROVE_CPUS_PER_TASK: 1      # CPUs per task
         DATATROVE_MEM_PER_CPU_GB: 2     # Memory used per task in GB
         INPUT_DIR: /app/data/input
         OUTPUT_DIR: /app/data/output
         LOGS_DIR: /app/data/logs
-        CONDA_BIN_PATH: /opt/conda_envs/datatrove_env/bin
 
       run: |
         echo "Submitting pipeline with ${DATATROVE_TASKS} tasks and ${DATATROVE_WORKERS} workers to Slurm..."
         # Use 'docker exec' to call the Python script with all arguments
-        docker exec slurmctld bash -c "export PATH='${CONDA_BIN_PATH}:$PATH' && \
+        docker exec slurmctld bash -c "export PATH='/opt/conda_envs/datatrove_env/bin:$PATH' && \
           sinfo && python /app/datatrove_pipeline.py \
           ${INPUT_DIR} \
           -t ${DATATROVE_TASKS} \

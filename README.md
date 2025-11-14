@@ -1,3 +1,33 @@
+# Datatrove Slurm Docker Cluster
+
+This is an implementation of a Datatrove processing pipeline running with Slurm inside a 
+Docker container. Some modifications were made to the original Slurm Docker Cluster setup 
+to allow the Datatrove environment to run. We also elected to use a single compute node for 
+Slurm.
+
+**IMPORTANT**: A working `datatrove_env.tar.gz`, containing a conda-packed environment with 
+all the libraries required for the Datatrove processing pipeline is REQUIRED to be placed in
+`slurm-docker-cluster/app/` for this project to function. The conda environment, named 
+`datatrove_env`, should be based in Python 3.11, with [datatrove-amalia](https://github.com/AMALIA-NOVA/datatrove-amalia) 
+installed, along with its requirements.
+
+In `.github/workflows/ci.yml` is the workflow to run this project, which also shows the steps 
+needed for manual execution. It contains some important variables to be set, either in this file 
+or manually exported into `env`, depending on the machine running the container and the data to 
+be processed, which are:
+
+- **SLURM_HOST_CPUS**: Number of CPUs to use in Slurm's compute node.
+- **SLURM_HOST_MEMORY**: Amount of memory available to use in Slurm's compute  node, in MB.
+- **HOST_INPUT_PATH**: The path to the collection containing WARC files to be processed in the host machine.
+- **HOST_OUTPUT_PATH**: The path where the processing outputs will be written in the host machine.
+- **HOST_LOGS_PATH**: The path where the processing logs will be written in the host machine.
+- **DATATROVE_TASKS**: Number of total tasks to run in the scraping/filtering portion of the Datatrove pipeline. This is divided by 5 for the deduplication portion.
+- **DATATROVE_WORKERS**: Number of workers to concurrently run tasks in the Datatrove pipeline.
+- **DATATROVE_CPUS_PER_TASK**: Number of CPUs to be used per task in the Datatrove pipeline.
+- **DATATROVE_MEM_PER_CPU_GB**: Memory used per task in the Datatrove pipeline, in GB.
+
+The original README for Slurm Docker Cluster is shown below.
+
 # Slurm Docker Cluster
 
 **Slurm Docker Cluster** is a multi-container Slurm cluster designed for rapid
@@ -26,7 +56,7 @@ This setup consists of the following containers:
 - **mysql**: Stores job and cluster data.
 - **slurmdbd**: Manages the Slurm database.
 - **slurmctld**: The Slurm controller responsible for job and resource management.
-- **c1, c2**: Compute nodes (running `slurmd`).
+- **c1**: Compute node (running `slurmd`).
 
 ### Persistent Volumes:
 

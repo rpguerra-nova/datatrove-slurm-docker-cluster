@@ -78,28 +78,6 @@ services:
     networks:
       - slurm-network
 
-  c2:
-    image: slurm-docker-cluster:${SLURM_VERSION:-25.05.3}
-    command: ["slurmd"]
-    hostname: c2
-    container_name: c2
-    privileged: true
-    volumes:
-      - etc_munge:/etc/munge
-      - etc_slurm:/etc/slurm
-      - slurm_jobdir:/data
-      - var_log_slurm:/var/log/slurm
-      - ./cgroup.conf:/etc/slurm/cgroup.conf
-      - ${HOST_INPUT_PATH}:/app/data/input:ro
-      - ${HOST_OUTPUT_PATH}:/app/data/output
-      - ${HOST_LOGS_PATH}:/app/data/logs
-    expose:
-      - "6818"
-    depends_on:
-      - "slurmctld"
-    networks:
-      - slurm-network
-
 volumes:
   etc_munge:
   etc_slurm:
