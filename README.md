@@ -2,7 +2,7 @@
 
 This is an implementation of a Datatrove processing pipeline running with Slurm inside a 
 Docker container. Some modifications were made to the original Slurm Docker Cluster setup 
-to allow the Datatrove environment to run. We also elected to use a single compute node for 
+to allow the Datatrove environment to run. We also decided to use a single compute node for 
 Slurm.
 
 **IMPORTANT**: A working `datatrove_env.tar.gz`, containing a conda-packed environment with 
@@ -25,6 +25,9 @@ be processed, which are:
 - **DATATROVE_WORKERS**: Number of workers to concurrently run tasks in the Datatrove pipeline.
 - **DATATROVE_CPUS_PER_TASK**: Number of CPUs to be used per task in the Datatrove pipeline.
 - **DATATROVE_MEM_PER_CPU_GB**: Memory used per task in the Datatrove pipeline, in GB.
+
+Testing locally with the RAQ2019 collection (570 GB), using 1000 total tasks and 16 workers, with 2GB of memory and 2 CPUs per task, 
+processing took 5 hours and 34 minutes.
 
 The original README for Slurm Docker Cluster is shown below.
 
